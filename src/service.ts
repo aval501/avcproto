@@ -92,7 +92,7 @@ async function onPeekActiveContractsAsync(elapsedTime: number, contracts: Asset[
                                             }
                                         }
                                     }
-                                    
+
                                     console.log(`Transferred`);
                                     break;
                                 default:
