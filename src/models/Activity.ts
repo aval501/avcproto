@@ -47,7 +47,8 @@ const CreateAssetActivitySchmea = new Schema({
 enum TransferType {
     AssetsFromOwnerToOwner = "assetFromOwnerToOwner",
     ValuesFromAssetToOwner = "valuesFromAssetToOwner",
-    ValuesFromOwnerToOwner = "valuesfromOwnerToOwner"
+    ValuesFromOwnerToOwner = "valuesFromOwnerToOwner",
+    ValuesFromOwnerToAsset = "valuesFromOwnerToAsset"
 }
 
 interface TransferActivity {

@@ -8,7 +8,7 @@ enum ValueHolderType {
 }
 
 interface Value {
-    value: number;
+    amount: number;
     holderType: ValueHolderType;
     owner?: Owner;
     asset?: Asset;
@@ -18,7 +18,7 @@ interface ValueDoc extends Value, Document {
 }
 
 const ValueSchema = new Schema({
-    value: Number,
+    amount: Number,
     holderType: String,
     owner: { type: Schema.Types.ObjectId, ref: "Owner" },
     asset: { type: Schema.Types.ObjectId, ref: "Asset" }

@@ -79,8 +79,8 @@ async function onPeekActiveContractsAsync(elapsedTime: number, contracts: Asset[
                                         const fromValues = await ValueModel.find({ holderType: ValueHolderType.Owner, owner: transfer.fromId }).exec();
                                         let newValue: Value;
                                         for (const value of fromValues) {
-                                            if (value.value > term.recurringTransfer.value) {
-                                                value.value -= 1;
+                                            if (value.amount > term.recurringTransfer.value) {
+                                                value.amount -= 1;
                                                 newValue = await ValueModel.create({
                                                     value: 1,
                                                     holderType: ValueHolderType.Owner,
