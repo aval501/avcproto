@@ -8,6 +8,9 @@ import { ActivityModel, ActivityType, ActivityStatus, TransferType, Activity } f
 import { AssetModel, AssetType, ExpressionType, ContractStatus, Asset } from "./models/Asset";
 import { ValueModel, Value, ValueHolderType, ValueDoc } from "./models/Value";
 import { TermType } from "./models/ContractTerm";
+import UserBusiness from "./businesses/user";
+import SystemBusiness from "./businesses/system";
+import OwnerBusiness from "./businesses/owner";
 
 async function waitAsync(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -54,6 +57,8 @@ const serviceState = {
 })();
 
 async function onPeekActiveContractsAsync(elapsedTime: number, contracts: Asset[]): Promise<void> {
+    const systemBusiness: SystemBusiness = await SystemBusiness.getBusinessAsync();
+
     for (const contract of contracts) {
         const terms = contract.contract.terms;
         for (const term of terms) {
@@ -65,35 +70,27 @@ async function onPeekActiveContractsAsync(elapsedTime: number, contracts: Asset[
                             const transfer = activity.transfer;
                             switch (transfer.type) {
                                 case TransferType.ValuesFromOwnerToOwner:
+                                    let toOwner: OwnerBusiness;
                                     if (!transfer.toId) {
                                         const candidateOwners = await OwnerModel.find({
                                             type: { "$nin": [OwnerType.System] },
                                             _id: { "$ne": transfer.fromId }
                                         }).exec();
 
-                                        const winner = candidateOwners[Math.floor(Math.random() * candidateOwners.length)];
-                                        transfer.toId = winner.id;
+                                        const toOwnerModel = candidateOwners[Math.floor(Math.random() * candidateOwners.length)];
+                                        toOwner = await systemBusiness.getUserBusinessAsync(toOwnerModel.id);
+                                    } else {
+                                        toOwner = await systemBusiness.getUserBusinessAsync(transfer.toId);
                                     }
 
-                                    if (!transfer.ids || transfer.ids.length === 0) {
-                                        const fromValues = await ValueModel.find({ holderType: ValueHolderType.Owner, owner: transfer.fromId }).exec();
-                                        let newValue: Value;
-                                        for (const value of fromValues) {
-                                            if (value.amount > term.recurringTransfer.value) {
-                                                value.amount -= 1;
-                                                newValue = await ValueModel.create({
-                                                    value: 1,
-                                                    holderType: ValueHolderType.Owner,
-                                                    owner: transfer.toId
-                                                });
 
-                                                await value.save();
-                                                activity.value = newValue;
-                                            }
-                                        }
+                                    let fromOwner: OwnerBusiness = systemBusiness;
+                                    if (transfer.fromId !== systemBusiness.owner.id) {
+                                        fromOwner = await systemBusiness.getUserBusinessAsync(transfer.fromId);
                                     }
 
-                                    console.log(`Transferred`);
+                                    const transferActivity = await fromOwner.transferValueAsync(toOwner, term.recurringTransfer.amount);
+                                    await checkAndLogAccounts([fromOwner, toOwner]);
                                     break;
                                 default:
                                     break;
@@ -106,6 +103,19 @@ async function onPeekActiveContractsAsync(elapsedTime: number, contracts: Asset[
             }
         }
     }
+}
+
+async function checkAndLogAccounts(owners: OwnerBusiness[]): Promise<void> {
+    const checkAccountActivities: Activity[] = [];
+    let ownerBalanceStr = "";
+    for (const owner of owners) {
+        const activities = await owner.checkAccountAsync();
+        checkAccountActivities.push(...activities);
+
+        ownerBalanceStr += `${owner.owner.name}: ${activities[0].checkAccount.amount} `;
+    }
+
+    console.log(ownerBalanceStr);
 }
 
 // async function onOrderIntervalAsync(elapsedTime: number, strategies: BaseStrategy[]): Promise<void> {

@@ -1,5 +1,12 @@
 import { Asset, AssetModel, AssetType } from "../models/Asset";
-import { Owner } from "../models/Owner";
+import { Owner, OwnerModel, OwnerType } from "../models/Owner";
+import SystemBusiness from "./system";
+import TeamBusiness from "./team";
+import UserBusiness from "./user";
+import { Activity, ActivityStatus, TransferType } from "../models/Activity";
+import { ValueModel } from "../models/Value";
+import { ActivityModel } from "../models/Activity";
+import { ActivityType } from "../models/Activity";
 
 export default class OwnerBusiness {
     public readonly owner: Owner;
@@ -9,11 +16,64 @@ export default class OwnerBusiness {
         this.owner = owner;
     }
 
+    public async checkAccountAsync(): Promise<Activity[]> {
+        const ownerValues = await ValueModel.find({ owner: this.owner }).exec();
+        const amount = ownerValues.reduce((sum, value) => sum + value.amount, 0);
+        if (amount !== ownerValues.length) {
+            throw `[Error] checkAccountAsync`;
+        }
+
+        const now = new Date();
+        const checkAccountActivity = await ActivityModel.create({
+            type: ActivityType.CheckAccount,
+            timestamp: now,
+            status: ActivityStatus.Completed,
+            owner: this.owner.id,
+            value: undefined,
+            checkAccount: {
+                id: this.owner.id,
+                name: this.owner.name,
+                amount: amount
+            }
+        });
+
+        return [checkAccountActivity];
+    }
     public async getBoardsAsync(): Promise<Asset[]> {
         if (!this._boards) {
             this._boards = await AssetModel.find({ type: AssetType.Board, owner: this.owner }).exec();
         }
 
         return this._boards;
+    }
+
+    public async transferValueAsync(targetBusiness: OwnerBusiness, valueAmount: number): Promise<Activity[]> {
+        const now = new Date();
+
+        console.log(`${this.owner.name} transfers ${valueAmount} amount to ${targetBusiness.owner.name}..`);
+        const userValues = await ValueModel.find({ owner: this.owner }).limit(valueAmount).exec();
+        if (userValues.length < valueAmount) {
+            throw `[ERROR] not enough money.`;
+        }
+
+        for (const userValue of userValues) {
+            userValue.owner = targetBusiness.owner;
+            await userValue.save();
+        }
+
+        const transferActivity = await ActivityModel.create({
+            type: ActivityType.Transfer,
+            timestamp: now,
+            status: ActivityStatus.Completed,
+            owner: this.owner.id,
+            transfer: {
+                type: TransferType.ValuesFromOwnerToOwner,
+                fromId: this.owner.id,
+                toId: targetBusiness.owner.id,
+                ids: userValues.map((value) => value.id)
+            }
+        });
+
+        return [transferActivity];
     }
 }

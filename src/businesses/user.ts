@@ -14,60 +14,6 @@ export default class UserBusiness extends OwnerBusiness {
         super(_user);
     }
 
-    public async checkAccountAsync(): Promise<Activity[]> {
-        const userValues = await ValueModel.find({ owner: this._user }).exec();
-        const amount = userValues.reduce((sum, value) => sum + value.amount, 0);
-        if (amount !== userValues.length) {
-            throw `[Error] checkAccountAsync`;
-        }
-
-        const now = new Date();
-        const checkAccountActivity = await ActivityModel.create({
-            type: ActivityType.CheckAccount,
-            timestamp: now,
-            status: ActivityStatus.Completed,
-            owner: this._user.id,
-            value: undefined,
-            checkAccount: {
-                id: this._user.id,
-                name: this._user.name,
-                amount: amount
-            }
-        });
-
-        return [checkAccountActivity];
-    }
-
-    public async transferValueAsync(targetBusiness: OwnerBusiness, valueAmount: number): Promise<Activity[]> {
-        const now = new Date();
-
-        console.log(`${this._user.name} transfers ${valueAmount} amount to ${targetBusiness.owner.name}..`);
-        const userValues = await ValueModel.find({ owner: this._user }).limit(valueAmount).exec();
-        if (userValues.length < valueAmount) {
-            throw `[ERROR] not enough money.`;
-        }
-
-        for (const userValue of userValues) {
-            userValue.owner = targetBusiness.owner;
-            await userValue.save();
-        }
-
-        const transferActivity = await ActivityModel.create({
-            type: ActivityType.Transfer,
-            timestamp: now,
-            status: ActivityStatus.Completed,
-            owner: this._user.id,
-            transfer: {
-                type: TransferType.ValuesFromOwnerToOwner,
-                fromId: this._user.id,
-                toId: targetBusiness.owner.id,
-                ids: userValues.map((value) => value.id)
-            }
-        });
-
-        return [transferActivity];
-    }
-
     public async transferAssetsAsync(targetBusiness: OwnerBusiness, assets: Asset[]): Promise<Activity[]> {
         const now = new Date();
         const firstPost = assets[0];

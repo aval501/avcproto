@@ -144,6 +144,163 @@ export default class SystemBusiness extends OwnerBusiness {
         this._delegate = new SystemDelegate(this.owner.id);
     }
 
+    public static async getBusinessAsync(): Promise<SystemBusiness> {
+        const system = await OwnerModel.findOne({ type: OwnerType.System });
+        if (!system) {
+            throw `[ERROR] system not found.`;
+        }
+
+        return new SystemBusiness(system);
+    }
+
+    public static async resetAsync(): Promise<SystemBusiness> {
+        console.log(`reset every document..`);
+        await OwnerModel.deleteMany({});
+        await ActivityModel.deleteMany({});
+        await AssetModel.deleteMany({});
+        await ValueModel.deleteMany({});
+        await ContractTermModel.deleteMany({});
+
+        const now = new Date();
+        console.log(`creating a System owner..`);
+        const system = await OwnerModel.create({
+            name: "System",
+            createdTime: now,
+            modifiedTime: now,
+            type: OwnerType.System,
+            memberOf: []
+        });
+        const systemBusiness = new SystemBusiness(system);
+
+        console.log(`creating system value..`);
+        const systemValue = await ValueModel.create({
+            amount: 1000000000,
+            holderType: ValueHolderType.Owner,
+            owner: system
+        });
+
+        await ActivityModel.create({
+            type: ActivityType.Create,
+            timestamp: now,
+            status: ActivityStatus.Completed,
+            owner: undefined,
+            value: systemValue,
+            create: {
+                owner: {
+                    id: system.id,
+                    name: system.name,
+                    type: system.type,
+                    memberOfIds: []
+                }
+            }
+        });
+
+        console.log(`creating system airdrop reward contract..`);
+        const airdropTerm = await ContractTermModel.create({
+            description: "Send 500 AVC to one randomly picked owner every 1 minute.",
+            type: TermType.RecurringTransfer,
+            interval: SystemBusiness._getInterval(1000 * 60), // 1min
+            status: TermStatus.Agreed,
+            recurringTransfer: {
+                amount: 500
+            }
+        });
+
+        const airdropActivity = await ActivityModel.create({
+            type: ActivityType.Transfer,
+            timestamp: now,
+            status: ActivityStatus.Pending,
+            owner: system,
+            contractTerm: airdropTerm,
+            transfer: {
+                type: TransferType.ValuesFromOwnerToOwner,
+                fromId: system.id,
+                toId: undefined,
+                ids: undefined
+            }
+        });
+
+        const systemAirDropContract = await AssetModel.create({
+            type: AssetType.Contract,
+            createdTime: now,
+            modifiedTime: now,
+            owner: system,
+            parent: undefined,
+            contract: {
+                title: "System Quarter-hour Air Drop Contract",
+                summary: "System distributes agreed upon values to one random active user or team every 1 mintue.",
+                status: ContractStatus.Active,
+                terms: [airdropTerm],
+                expireDate: undefined
+            }
+        });
+
+        await ActivityModel.create({
+            type: ActivityType.Create,
+            timestamp: now,
+            status: ActivityStatus.Completed,
+            owner: system.id,
+            value: undefined,
+            create: {
+                asset: {
+                    id: systemAirDropContract.id,
+                    type: systemAirDropContract.type,
+                    parentId: undefined,
+                    ownerId: systemAirDropContract.owner.id
+                }
+            }
+        });
+
+        console.log(`creating system board..`);
+        const systemBoard = await AssetModel.create({
+            type: AssetType.Board,
+            createdTime: now,
+            modifiedTime: now,
+            owner: system,
+            parent: undefined,
+            board: {
+                name: "General",
+                description: "System's general board."
+            }
+        });
+
+        await ActivityModel.create({
+            type: ActivityType.Create,
+            timestamp: now,
+            status: ActivityStatus.Completed,
+            owner: system.id,
+            value: undefined,
+            create: {
+                asset: {
+                    id: systemBoard.id,
+                    type: systemBoard.type,
+                    parentId: undefined,
+                    ownerId: systemBoard.owner.id
+                }
+            }
+        });
+
+        return systemBusiness;
+    }
+
+    public async getUserBusinessAsync(id: string): Promise<UserBusiness> {
+        const user = await OwnerModel.findById(id);
+        if (!user) {
+            throw `[ERROR] no user found!`;
+        }
+
+        return new UserBusiness(user, this._delegate);
+    }
+
+    public async getTeamBusinessAsync(id: string): Promise<TeamBusiness> {
+        const team = await OwnerModel.findById(id);
+        if (!team) {
+            throw `[ERROR] no team found!`;
+        }
+
+        return new TeamBusiness(team);
+    }
+
     public async createUserAsync(name: string): Promise<UserBusiness> {
         const now = new Date();
 
@@ -237,133 +394,9 @@ export default class SystemBusiness extends OwnerBusiness {
         return teamBusiness;
     }
 
-    public static async resetAsync(): Promise<SystemBusiness> {
-        console.log(`reset every document..`);
-        await OwnerModel.deleteMany({});
-        await ActivityModel.deleteMany({});
-        await AssetModel.deleteMany({});
-        await ValueModel.deleteMany({});
-        await ContractTermModel.deleteMany({});
-
-        const now = new Date();
-        console.log(`creating a System owner..`);
-        const system = await OwnerModel.create({
-            name: "System",
-            createdTime: now,
-            modifiedTime: now,
-            type: OwnerType.System,
-            memberOf: []
-        });
-        const systemBusiness = new SystemBusiness(system);
-
-        console.log(`creating system value..`);
-        const systemValue = await ValueModel.create({
-            amount: 1000000000,
-            holderType: ValueHolderType.Owner,
-            owner: system
-        });
-
-        await ActivityModel.create({
-            type: ActivityType.Create,
-            timestamp: now,
-            status: ActivityStatus.Completed,
-            owner: undefined,
-            value: systemValue,
-            create: {
-                owner: {
-                    id: system.id,
-                    name: system.name,
-                    type: system.type,
-                    memberOfIds: []
-                }
-            }
-        });
-
-        console.log(`creating system airdrop reward contract..`);
-        const airdropTerm = await ContractTermModel.create({
-            description: "Send 100 AVC to one randomly picked owner every 1 minute.",
-            type: TermType.RecurringTransfer,
-            interval: 1000 * 60, // 1min
-            status: TermStatus.Agreed,
-            recurringTransfer: {
-                amount: 100
-            }
-        });
-
-        const airdropActivity = await ActivityModel.create({
-            type: ActivityType.Transfer,
-            timestamp: now,
-            status: ActivityStatus.Pending,
-            owner: system,
-            contractTerm: airdropTerm,
-            transfer: {
-                type: TransferType.ValuesFromOwnerToOwner,
-                fromId: system.id,
-                toId: undefined,
-                ids: undefined
-            }
-        });
-
-        const systemAirDropContract = await AssetModel.create({
-            type: AssetType.Contract,
-            createdTime: now,
-            modifiedTime: now,
-            owner: system,
-            parent: undefined,
-            contract: {
-                title: "System Quarter-hour Air Drop Contract",
-                summary: "System distributes agreed upon values to one random active user or team every 1 mintue.",
-                status: ContractStatus.Active,
-                terms: [airdropTerm],
-                expireDate: undefined
-            }
-        });
-
-        await ActivityModel.create({
-            type: ActivityType.Create,
-            timestamp: now,
-            status: ActivityStatus.Completed,
-            owner: system.id,
-            value: undefined,
-            create: {
-                asset: {
-                    id: systemAirDropContract.id,
-                    type: systemAirDropContract.type,
-                    parentId: undefined,
-                    ownerId: systemAirDropContract.owner.id
-                }
-            }
-        });
-
-        console.log(`creating system board..`);
-        const systemBoard = await AssetModel.create({
-            type: AssetType.Board,
-            createdTime: now,
-            modifiedTime: now,
-            owner: system,
-            parent: undefined,
-            board: {
-                name: "General",
-                description: "System's general board."
-            }
-        });
-
-        await ActivityModel.create({
-            type: ActivityType.Create,
-            timestamp: now,
-            status: ActivityStatus.Completed,
-            owner: system.id,
-            value: undefined,
-            create: {
-                asset: {
-                    id: systemBoard.id,
-                    type: systemBoard.type,
-                    parentId: undefined,
-                    ownerId: systemBoard.owner.id
-                }
-            }
-        });
-
-        return systemBusiness;
+    private static _getInterval(ms: number): number {
+        const timeMachineFactor = 4; // 1;
+        ms = ms / timeMachineFactor;
+        return ms;
     }
 }
