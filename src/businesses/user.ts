@@ -41,24 +41,27 @@ export default class UserBusiness extends OwnerBusiness {
     public async transferValueAsync(targetBusiness: OwnerBusiness, valueAmount: number): Promise<Activity[]> {
         const now = new Date();
 
-        const user = await ValueModel.find({ owner: this._user }).exec();
+        console.log(`${this._user.name} transfers ${valueAmount} amount to ${targetBusiness.owner.name}..`);
+        const userValues = await ValueModel.find({ owner: this._user }).limit(valueAmount).exec();
+        if (userValues.length < valueAmount) {
+            throw `[ERROR] not enough money.`;
+        }
 
-        console.log(`first citizen transfers 1 value from first citizen to to the second citizen.`);
-        const value = user.find((value) => value.amount === 1);
-        value.owner = targetBusiness.owner;
-        await value.save();
+        for (const userValue of userValues) {
+            userValue.owner = targetBusiness.owner;
+            await userValue.save();
+        }
 
         const transferActivity = await ActivityModel.create({
             type: ActivityType.Transfer,
             timestamp: now,
             status: ActivityStatus.Completed,
             owner: this._user.id,
-            value: undefined,
             transfer: {
                 type: TransferType.ValuesFromOwnerToOwner,
                 fromId: this._user.id,
                 toId: targetBusiness.owner.id,
-                ids: [value.id]
+                ids: userValues.map((value) => value.id)
             }
         });
 
@@ -104,7 +107,7 @@ export default class UserBusiness extends OwnerBusiness {
             owner: this._user.id,
             parent: asset.id,
             expression: {
-                type: ExpressionType.Worth
+                type: expressionType
             }
         });
 
