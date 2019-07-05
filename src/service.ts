@@ -83,12 +83,12 @@ async function onPeekActiveContractsAsync(elapsedTime: number, contracts: Asset[
                                         toOwner = await systemBusiness.getUserBusinessAsync(transfer.toId);
                                     }
 
-
                                     let fromOwner: OwnerBusiness = systemBusiness;
                                     if (transfer.fromId !== systemBusiness.owner.id) {
                                         fromOwner = await systemBusiness.getUserBusinessAsync(transfer.fromId);
                                     }
 
+                                    await checkAndLogAccounts([fromOwner, toOwner]);
                                     const transferActivity = await fromOwner.transferValueAsync(toOwner, term.recurringTransfer.amount);
                                     await checkAndLogAccounts([fromOwner, toOwner]);
                                     break;

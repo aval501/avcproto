@@ -3,7 +3,7 @@ import { ValueModel, ValueHolderType, ValueDoc, Value } from "../models/Value";
 import { ActivityModel, TransferType, Activity } from "../models/Activity";
 import { ActivityStatus } from "../models/Activity";
 import { ActivityType } from "../models/Activity";
-import { AssetType } from "../models/Asset";
+import { AssetType, Asset } from "../models/Asset";
 import { AssetModel } from "../models/Asset";
 import { ContractStatus } from "../models/Asset";
 import { TermStatus } from "../models/ContractTerm";
@@ -16,6 +16,26 @@ import { create } from "istanbul-reports";
 
 export class SystemDelegate {
     constructor(private _systemId: string) {
+    }
+
+    public async splitValuesAsync(amount: number, holderType: ValueHolderType, owner?: Owner, asset?: Asset): Promise<ValueDoc[]> {
+        const values: Value[] = [];
+        const systemValues = await ValueModel.find({ owner: this._systemId }).exec();
+
+        for (let i = 0; i < amount; i++) {
+            values.push({
+                amount: 1,
+                holderType: holderType,
+                owner: owner,
+                asset: asset
+            });
+        }
+
+        systemValues[0].amount -= amount;
+        await systemValues[0].save();
+        const valueDocs = await ValueModel.insertMany(values);
+
+        return valueDocs;
     }
 
     public async contributeAssetAsync(createActivity: Activity): Promise<Activity> {
@@ -56,19 +76,7 @@ export class SystemDelegate {
             throw `[ERROR] asset not found.`;
         }
 
-        const values: Value[] = [];
-        systemValues[0].amount -= rewardAmount;
-        for (let i = 0; i < rewardAmount; i++) {
-            values.push({
-                amount: 1,
-                holderType: ValueHolderType.Asset,
-                asset: asset
-            });
-        }
-
-        await systemValues[0].save();
-        const valueDocs = await ValueModel.insertMany(values);
-
+        const values = await this.splitValuesAsync(rewardAmount, ValueHolderType.Asset, undefined, asset);
         const now = new Date();
         const transferActivity = ActivityModel.create({
             type: ActivityType.Transfer,
@@ -80,7 +88,7 @@ export class SystemDelegate {
                 type: TransferType.ValuesFromOwnerToAsset,
                 fromId: this._systemId,
                 toId: asset.id,
-                ids: valueDocs.map(value => value.id)
+                ids: values.map(value => value.id)
             }
         });
 
@@ -299,6 +307,10 @@ export default class SystemBusiness extends OwnerBusiness {
         }
 
         return new TeamBusiness(team);
+    }
+
+    public async splitValuesAsync(amount: number, holderType: ValueHolderType, owner?: Owner, asset?: Asset): Promise<ValueDoc[]> {
+        return await this._delegate.splitValuesAsync(amount, holderType, owner, asset);
     }
 
     public async createUserAsync(name: string): Promise<UserBusiness> {

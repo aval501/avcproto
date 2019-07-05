@@ -4,7 +4,7 @@ import SystemBusiness from "./system";
 import TeamBusiness from "./team";
 import UserBusiness from "./user";
 import { Activity, ActivityStatus, TransferType } from "../models/Activity";
-import { ValueModel } from "../models/Value";
+import { ValueModel, ValueHolderType } from "../models/Value";
 import { ActivityModel } from "../models/Activity";
 import { ActivityType } from "../models/Activity";
 
@@ -17,11 +17,8 @@ export default class OwnerBusiness {
     }
 
     public async checkAccountAsync(): Promise<Activity[]> {
-        const ownerValues = await ValueModel.find({ owner: this.owner }).exec();
+        const ownerValues = await ValueModel.find({ owner: this.owner.id }).exec();
         const amount = ownerValues.reduce((sum, value) => sum + value.amount, 0);
-        if (amount !== ownerValues.length) {
-            throw `[Error] checkAccountAsync`;
-        }
 
         const now = new Date();
         const checkAccountActivity = await ActivityModel.create({
@@ -51,8 +48,11 @@ export default class OwnerBusiness {
         const now = new Date();
 
         console.log(`${this.owner.name} transfers ${valueAmount} amount to ${targetBusiness.owner.name}..`);
-        const userValues = await ValueModel.find({ owner: this.owner }).limit(valueAmount).exec();
-        if (userValues.length < valueAmount) {
+        let userValues = await ValueModel.find({ owner: this.owner }).limit(valueAmount).exec();
+        if (this.owner.type === OwnerType.System) {
+            const systemBusiness = await SystemBusiness.getBusinessAsync();
+            userValues = await systemBusiness.splitValuesAsync(valueAmount, ValueHolderType.Owner, this.owner);
+        } else if (userValues.length < valueAmount) {
             throw `[ERROR] not enough money.`;
         }
 
