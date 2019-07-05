@@ -1,4 +1,4 @@
-import { Asset } from "../models/Asset";
+import { Asset, AssetModel, AssetType } from "../models/Asset";
 import { Owner } from "../models/Owner";
 
 export default class OwnerBusiness {
@@ -9,7 +9,11 @@ export default class OwnerBusiness {
         this.owner = owner;
     }
 
-    public async getBoards(): Promise<Asset[]> {
+    public async getBoardsAsync(): Promise<Asset[]> {
+        if (!this._boards) {
+            this._boards = await AssetModel.find({ type: AssetType.Board, owner: this.owner }).exec();
+        }
+
         return this._boards;
     }
 }

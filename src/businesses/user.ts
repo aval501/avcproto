@@ -14,18 +14,37 @@ export default class UserBusiness extends OwnerBusiness {
         super(_user);
     }
 
-    public async checkBalanceAsync(): Promise<Activity[]> {
-        let firstCitizenValues = await ValueModel.find({ owner: this._user }).exec();
-        return [];
+    public async checkAccountAsync(): Promise<Activity[]> {
+        const userValues = await ValueModel.find({ owner: this._user }).exec();
+        const amount = userValues.reduce((sum, value) => sum + value.amount, 0);
+        if (amount !== userValues.length) {
+            throw `[Error] checkAccountAsync`;
+        }
+
+        const now = new Date();
+        const checkAccountActivity = await ActivityModel.create({
+            type: ActivityType.CheckAccount,
+            timestamp: now,
+            status: ActivityStatus.Completed,
+            owner: this._user.id,
+            value: undefined,
+            checkAccount: {
+                id: this._user.id,
+                name: this._user.name,
+                amount: amount
+            }
+        });
+
+        return [checkAccountActivity];
     }
 
     public async transferValueAsync(targetBusiness: OwnerBusiness, valueAmount: number): Promise<Activity[]> {
         const now = new Date();
 
-        let firstCitizenValues = await ValueModel.find({ owner: this._user }).exec();
+        const user = await ValueModel.find({ owner: this._user }).exec();
 
         console.log(`first citizen transfers 1 value from first citizen to to the second citizen.`);
-        const value = firstCitizenValues.find((value) => value.amount === 1);
+        const value = user.find((value) => value.amount === 1);
         value.owner = targetBusiness.owner;
         await value.save();
 
@@ -50,8 +69,8 @@ export default class UserBusiness extends OwnerBusiness {
         const now = new Date();
         const firstPost = assets[0];
 
-        console.log(`first citizen cashout value from the post.`);
-        console.log(`transferring first post from first citizen to the system.`);
+        console.log(`${this._user.name} cashout value from the assets..`);
+        console.log(`transferring assets from ${this._user.name} to ${targetBusiness.owner.name}..`);
         firstPost.owner = targetBusiness.owner;
         firstPost.save();
 
@@ -77,7 +96,7 @@ export default class UserBusiness extends OwnerBusiness {
     public async createExpressionAsync(asset: Asset, expressionType: ExpressionType): Promise<Asset> {
         const now = new Date();
 
-        console.log(`second citizen makes a first expression on the first post`);
+        console.log(`${this._user.name} makes a expression on the post: ${asset.post.content}`);
         const firstExpression = await AssetModel.create({
             type: AssetType.Expression,
             createdTime: now,
@@ -149,8 +168,8 @@ export default class UserBusiness extends OwnerBusiness {
     public async createPostAsync(board: Asset, content: string): Promise<Asset> {
         const now = new Date();
 
-        console.log(`first citizen create a first post on a system dashboard..`);
-        const firstPost = await AssetModel.create({
+        console.log(`${this._user.name} create a post on a ${board.board.name} board..`);
+        const post = await AssetModel.create({
             type: AssetType.Post,
             createdTime: now,
             modifiedTime: now,
@@ -169,16 +188,17 @@ export default class UserBusiness extends OwnerBusiness {
             // value: postValue,
             create: {
                 asset: {
-                    id: firstPost.id,
-                    type: firstPost.type,
+                    id: post.id,
+                    type: post.type,
                     parentId: board.id,
                     ownerId: this._user.id
                 }
             }
         });
 
+        console.log(`Reporting contribution to the system through delegate..`);
         const rewardActivity = await this._systemDelegate.contributeAssetAsync(createActivity);
 
-        return firstPost;
+        return post;
     }
 }

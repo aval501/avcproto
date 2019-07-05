@@ -6,7 +6,8 @@ import { ContractTerm } from "./ContractTerm";
 
 enum ActivityType {
     Create = "create",
-    Transfer = "transfer"
+    Transfer = "transfer",
+    CheckAccount = "checkAccount"
 }
 
 enum ActivityStatus {
@@ -65,6 +66,18 @@ const TransferActivitySchema = new Schema({
     ids: [String]
 });
 
+interface CheckAccountActivity {
+    id: string;
+    name: string;
+    amount: number;
+}
+
+const CheckAccountActivitySchema = new Schema({
+    id: String,
+    name: String,
+    amount: Number
+});
+
 interface Activity extends Document {
     type: ActivityType;
     timestamp: Date;
@@ -77,9 +90,7 @@ interface Activity extends Document {
         asset?: CreateAssetActivity;
     };
     transfer?: TransferActivity;
-    post?: {};
-    comment?: {};
-    evaluate?: {};
+    checkAccount?: CheckAccountActivity;
 }
 
 const ActivitySchema = new Schema({
@@ -93,7 +104,8 @@ const ActivitySchema = new Schema({
         owner: CreateOwnerActivitySchema,
         asset: CreateAssetActivitySchmea
     },
-    transfer: TransferActivitySchema
+    transfer: TransferActivitySchema,
+    checkAccount: CheckAccountActivitySchema
 });
 
 // ActivitySchema.index({ meta: 1 });

@@ -48,35 +48,34 @@ async function onConnectAsync(): Promise<void> {
 
     const now = new Date();
     const systemBiz = await SystemBusiness.resetAsync();
-    const systemBoards = await systemBiz.getBoards();
+    const systemBoards = await systemBiz.getBoardsAsync();
 
     const directorsBiz = await systemBiz.createTeamAsync("Directors");
-    const directorsTeamBoards = await directorsBiz.getBoards();
+    const directorsTeamBoards = await directorsBiz.getBoardsAsync();
 
     const firstUserBiz = await systemBiz.createUserAsync("First Citizen");
-    const firstUserBoards = await firstUserBiz.getBoards();
+    const firstUserBoards = await firstUserBiz.getBoardsAsync();
     const secondUserBiz = await systemBiz.createUserAsync("Second Citizen");
-    const secondUserBoards = await secondUserBiz.getBoards();
+    const secondUserBoards = await secondUserBiz.getBoardsAsync();
+    const thirdUserBiz = await systemBiz.createUserAsync("Third Citizen");
+    const thirdUserBoards = await thirdUserBiz.getBoardsAsync();
 
     const post = await firstUserBiz.createPostAsync(systemBoards[0], `<h1>hello world</h1><p>this is my first post</p>`);
     const comment = await secondUserBiz.createCommentAsync(post, `<p>some comment here</p>`);
     const worthExpression = await secondUserBiz.createExpressionAsync(post, ExpressionType.Worth);
     const notWorthExpression = await firstUserBiz.createExpressionAsync(comment, ExpressionType.NotWorth);
 
-    let firstUserCheckBalanceActivity = await firstUserBiz.checkBalanceAsync();
-    console.log(firstUserCheckBalanceActivity);
-    let secondUserCheckBalanceActivity = await secondUserBiz.checkBalanceAsync();
-    console.log(secondUserCheckBalanceActivity);
+    let firstUserCheckAccountActivity = await firstUserBiz.checkAccountAsync();
+    let secondUserCheckAccountActivity = await secondUserBiz.checkAccountAsync();
+    console.log(`First balance: ${firstUserCheckAccountActivity[0].checkAccount.amount}, Second balance: ${secondUserCheckAccountActivity[0].checkAccount.amount}`);
 
     const firstUserTransferAssetActivity = await firstUserBiz.transferAssetsAsync(systemBiz, [post]);
-    firstUserCheckBalanceActivity = await firstUserBiz.checkBalanceAsync();
-    console.log(firstUserCheckBalanceActivity);
-    secondUserCheckBalanceActivity = await secondUserBiz.checkBalanceAsync();
-    console.log(secondUserCheckBalanceActivity);
+    firstUserCheckAccountActivity = await firstUserBiz.checkAccountAsync();
+    secondUserCheckAccountActivity = await secondUserBiz.checkAccountAsync();
+    console.log(`First balance: ${firstUserCheckAccountActivity[0].checkAccount.amount}, Second balance: ${secondUserCheckAccountActivity[0].checkAccount.amount}`);
 
     const firstUserTransferValueActivity = await firstUserBiz.transferValueAsync(secondUserBiz, 1);
-    firstUserCheckBalanceActivity = await firstUserBiz.checkBalanceAsync();
-    console.log(firstUserCheckBalanceActivity);
-    secondUserCheckBalanceActivity = await secondUserBiz.checkBalanceAsync();
-    console.log(secondUserCheckBalanceActivity);
+    firstUserCheckAccountActivity = await firstUserBiz.checkAccountAsync();
+    secondUserCheckAccountActivity = await secondUserBiz.checkAccountAsync();
+    console.log(`First balance: ${firstUserCheckAccountActivity[0].checkAccount.amount}, Second balance: ${secondUserCheckAccountActivity[0].checkAccount.amount}`);
 }

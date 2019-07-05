@@ -97,9 +97,9 @@ export class SystemDelegate {
             throw `[ERROR] offerAssetAsync multiple assets not supported.`;
         }
 
-        const toOwner = await OwnerModel.findById(transfer.toId);
-        if (!toOwner) {
-            throw `[ERROR] target owner not found.`;
+        const rewardOwner = await OwnerModel.findById(transfer.fromId);
+        if (!rewardOwner) {
+            throw `[ERROR] reward target owner not found.`;
         }
 
         const assetId = transfer.ids[0];
@@ -112,7 +112,7 @@ export class SystemDelegate {
         for (const value of assetValues) {
             value.holderType = ValueHolderType.Owner;
             value.asset = undefined;
-            value.owner = toOwner;
+            value.owner = rewardOwner.id;
             await value.save();
         }
 
@@ -126,7 +126,7 @@ export class SystemDelegate {
             transfer: {
                 type: TransferType.ValuesFromAssetToOwner,
                 fromId: assetId,
-                toId: transfer.toId,
+                toId: rewardOwner.id,
                 ids: assetValues.map(value => value.id)
             }
         });
@@ -147,13 +147,13 @@ export default class SystemBusiness extends OwnerBusiness {
     public async createUserAsync(name: string): Promise<UserBusiness> {
         const now = new Date();
 
-        console.log(`creating first citizen..`);
+        console.log(`creating citizen ${name}..`);
         const firstCitizen = await OwnerModel.create({
-            name: "First Citizen",
+            name: name,
             createdTime: now,
             modifiedTime: now,
             type: OwnerType.User,
-            memberOf: [this._system.id, this._directors.id]
+            memberOf: [this._system.id]
         });
         const userBusiness = new UserBusiness(firstCitizen, this._delegate);
 
@@ -252,7 +252,7 @@ export default class SystemBusiness extends OwnerBusiness {
 
         console.log(`creating system value..`);
         const systemValue = await ValueModel.create({
-            value: 1000000000,
+            amount: 1000000000,
             holderType: ValueHolderType.Owner,
             owner: system
         });
