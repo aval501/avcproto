@@ -59,23 +59,39 @@ async function onConnectAsync(): Promise<void> {
     const secondUserBoards = await secondUserBiz.getBoardsAsync();
     const thirdUserBiz = await systemBiz.createUserAsync("Third Citizen");
     const thirdUserBoards = await thirdUserBiz.getBoardsAsync();
+    const allUserBizs = [firstUserBiz, secondUserBiz, thirdUserBiz];
 
     const post = await firstUserBiz.createPostAsync(systemBoards[0], `<h1>hello world</h1><p>this is my first post</p>`);
     const comment = await secondUserBiz.createCommentAsync(post, `<p>some comment here</p>`);
     const worthExpression = await secondUserBiz.createExpressionAsync(post, ExpressionType.Worth);
     const notWorthExpression = await firstUserBiz.createExpressionAsync(comment, ExpressionType.NotWorth);
-
-    let firstUserCheckAccountActivity = await firstUserBiz.checkAccountAsync();
-    let secondUserCheckAccountActivity = await secondUserBiz.checkAccountAsync();
-    console.log(`First balance: ${firstUserCheckAccountActivity[0].checkAccount.amount}, Second balance: ${secondUserCheckAccountActivity[0].checkAccount.amount}`);
+    await checkAndLogAccounts(allUserBizs);
 
     const firstUserTransferAssetActivity = await firstUserBiz.transferAssetsAsync(systemBiz, [post]);
-    firstUserCheckAccountActivity = await firstUserBiz.checkAccountAsync();
-    secondUserCheckAccountActivity = await secondUserBiz.checkAccountAsync();
-    console.log(`First balance: ${firstUserCheckAccountActivity[0].checkAccount.amount}, Second balance: ${secondUserCheckAccountActivity[0].checkAccount.amount}`);
+    await checkAndLogAccounts(allUserBizs);
 
-    const firstUserTransferValueActivity = await firstUserBiz.transferValueAsync(secondUserBiz, 1);
-    firstUserCheckAccountActivity = await firstUserBiz.checkAccountAsync();
-    secondUserCheckAccountActivity = await secondUserBiz.checkAccountAsync();
-    console.log(`First balance: ${firstUserCheckAccountActivity[0].checkAccount.amount}, Second balance: ${secondUserCheckAccountActivity[0].checkAccount.amount}`);
+    let firstUserTransferValueActivity = await firstUserBiz.transferValueAsync(secondUserBiz, 1);
+    await checkAndLogAccounts(allUserBizs);
+
+    firstUserTransferValueActivity = await firstUserBiz.transferValueAsync(thirdUserBiz, 2);
+    await checkAndLogAccounts(allUserBizs);
+
+    const thirdUserTransferValueActivity = await thirdUserBiz.transferValueAsync(secondUserBiz, 1);
+    await checkAndLogAccounts(allUserBizs);
+
+    const secondUserTransferValueActivity = await secondUserBiz.transferValueAsync(firstUserBiz, 1);
+    await checkAndLogAccounts(allUserBizs);
+}
+
+async function checkAndLogAccounts(users: UserBusiness[]): Promise<void> {
+    const checkAccountActivities: Activity[] = [];
+    let userBalanceStr = "";
+    for (const user of users) {
+        const activities = await user.checkAccountAsync();
+        checkAccountActivities.push(...activities);
+
+        userBalanceStr += `${user.owner.name}: ${activities[0].checkAccount.amount} `;
+    }
+
+    console.log(userBalanceStr);
 }
