@@ -1,5 +1,5 @@
 import { Asset, AssetModel, AssetType, ExpressionType } from "../models/Asset";
-import { Owner } from "../models/Owner";
+import { Owner, OwnerType } from "../models/Owner";
 import { ValueDoc } from "../models/Value";
 import { ValueModel } from "../models/Value";
 import { ValueHolderType } from "../models/Value";
@@ -71,6 +71,7 @@ export default class UserBusiness extends OwnerBusiness {
     public async transferAssetsAsync(targetBusiness: OwnerBusiness, assets: Asset[]): Promise<Activity[]> {
         const now = new Date();
         const firstPost = assets[0];
+        const activities: Activity[] = [];
 
         console.log(`${this._user.name} cashout value from the assets..`);
         console.log(`transferring assets from ${this._user.name} to ${targetBusiness.owner.name}..`);
@@ -90,22 +91,26 @@ export default class UserBusiness extends OwnerBusiness {
                 ids: [firstPost.id]
             }
         });
+        activities.push(transferAssetActivity);
 
-        const valueRewardActivity = await this._systemDelegate.offerAssetAsync(transferAssetActivity);
+        if (targetBusiness.owner.type === OwnerType.System) {
+            const valueRewardActivity = await this._systemDelegate.offerAssetAsync(transferAssetActivity);
+            activities.push(valueRewardActivity);
+        }
 
-        return [transferAssetActivity, valueRewardActivity];
+        return activities;
     }
 
-    public async createExpressionAsync(asset: Asset, expressionType: ExpressionType): Promise<Asset> {
+    public async createExpressionAsync(targetAsset: Asset, expressionType: ExpressionType): Promise<Asset> {
         const now = new Date();
 
-        console.log(`${this._user.name} makes a expression on the post: ${asset.post.content}`);
+        console.log(`${this._user.name} makes a expression on asset: ${targetAsset.id}`);
         const firstExpression = await AssetModel.create({
             type: AssetType.Expression,
             createdTime: now,
             modifiedTime: now,
             owner: this._user.id,
-            parent: asset.id,
+            parent: targetAsset,
             expression: {
                 type: expressionType
             }

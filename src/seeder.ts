@@ -39,13 +39,6 @@ async function waitAsync(ms: number): Promise<void> {
 })();
 
 async function onConnectAsync(): Promise<void> {
-    console.log(`reset every document..`);
-    await OwnerModel.deleteMany({});
-    await ActivityModel.deleteMany({});
-    await AssetModel.deleteMany({});
-    await ValueModel.deleteMany({});
-    await ContractTermModel.deleteMany({});
-
     const now = new Date();
     const systemBiz = await SystemBusiness.resetAsync();
     const systemBoards = await systemBiz.getBoardsAsync();

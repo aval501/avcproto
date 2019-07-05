@@ -161,7 +161,7 @@ export default class SystemBusiness extends OwnerBusiness {
             type: ActivityType.Create,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: this._system.id,
+            owner: this._system,
             value: undefined,
             create: {
                 owner: {
@@ -179,9 +179,9 @@ export default class SystemBusiness extends OwnerBusiness {
     public async createTeamAsync(name: string): Promise<TeamBusiness> {
         const now = new Date();
 
-        console.log(`creating directors team..`);
+        console.log(`creating ${name} team..`);
         const directors = await OwnerModel.create({
-            name: "Directors",
+            name: name,
             createdTime: now,
             modifiedTime: now,
             type: OwnerType.Team,
@@ -205,16 +205,16 @@ export default class SystemBusiness extends OwnerBusiness {
             }
         });
 
-        console.log(`creating directors' team board..`);
+        console.log(`creating ${name}'s team board..`);
         const directorsBoard = await AssetModel.create({
             type: AssetType.Board,
             createdTime: now,
             modifiedTime: now,
-            owner: directors.id,
+            owner: directors,
             parent: undefined,
             board: {
                 name: "General",
-                description: "Director's general board."
+                description: `${name}'s general board.`
             }
         });
 
@@ -222,7 +222,7 @@ export default class SystemBusiness extends OwnerBusiness {
             type: ActivityType.Create,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: this._system.id,
+            owner: this._system,
             value: undefined,
             create: {
                 asset: {
@@ -238,8 +238,14 @@ export default class SystemBusiness extends OwnerBusiness {
     }
 
     public static async resetAsync(): Promise<SystemBusiness> {
-        const now = new Date();
+        console.log(`reset every document..`);
+        await OwnerModel.deleteMany({});
+        await ActivityModel.deleteMany({});
+        await AssetModel.deleteMany({});
+        await ValueModel.deleteMany({});
+        await ContractTermModel.deleteMany({});
 
+        const now = new Date();
         console.log(`creating a System owner..`);
         const system = await OwnerModel.create({
             name: "System",
@@ -275,12 +281,12 @@ export default class SystemBusiness extends OwnerBusiness {
 
         console.log(`creating system airdrop reward contract..`);
         const airdropTerm = await ContractTermModel.create({
-            description: "Send 1 AVC to one randomly picked owner every 15 minutes.",
+            description: "Send 100 AVC to one randomly picked owner every 1 minute.",
             type: TermType.RecurringTransfer,
-            interval: 1000 * 60 * 15, // 15mins
+            interval: 1000 * 60, // 1min
             status: TermStatus.Agreed,
             recurringTransfer: {
-                value: 1
+                amount: 100
             }
         });
 
@@ -306,7 +312,7 @@ export default class SystemBusiness extends OwnerBusiness {
             parent: undefined,
             contract: {
                 title: "System Quarter-hour Air Drop Contract",
-                summary: "System distributes agreed upon values to one random active user or team every 15 mintues.",
+                summary: "System distributes agreed upon values to one random active user or team every 1 mintue.",
                 status: ContractStatus.Active,
                 terms: [airdropTerm],
                 expireDate: undefined
@@ -334,7 +340,7 @@ export default class SystemBusiness extends OwnerBusiness {
             type: AssetType.Board,
             createdTime: now,
             modifiedTime: now,
-            owner: system.id,
+            owner: system,
             parent: undefined,
             board: {
                 name: "General",

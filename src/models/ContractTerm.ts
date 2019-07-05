@@ -15,11 +15,11 @@ enum TermStatus {
 }
 
 interface RecurringTransfer {
-    value: number;
+    amount: number;
 }
 
 const RecurringTransferSchema = new Schema({
-    value: Number
+    amount: Number
 });
 
 interface ContractTerm {
