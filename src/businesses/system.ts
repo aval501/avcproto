@@ -205,12 +205,12 @@ export default class SystemBusiness extends OwnerBusiness {
 
         console.log(`creating system airdrop reward contract..`);
         const airdropTerm = await ContractTermModel.create({
-            description: "Send 500 AVC to one randomly picked owner every 1 minute.",
+            description: "Send 10 AVC to one randomly picked owner every 15s.",
             type: TermType.RecurringTransfer,
-            interval: SystemBusiness._getInterval(1000 * 60), // 1min
+            interval: SystemBusiness._getInterval(1000 * 15), // 15s
             status: TermStatus.Agreed,
             recurringTransfer: {
-                amount: 500
+                amount: 10
             }
         });
 
@@ -407,7 +407,7 @@ export default class SystemBusiness extends OwnerBusiness {
     }
 
     private static _getInterval(ms: number): number {
-        const timeMachineFactor = 4; // 1;
+        const timeMachineFactor = 1;
         ms = ms / timeMachineFactor;
         return ms;
     }

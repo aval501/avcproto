@@ -128,7 +128,7 @@ export default class UserBusiness extends OwnerBusiness {
             createdTime: now,
             modifiedTime: now,
             owner: this._user.id,
-            parent: undefined,
+            parent: board,
             post: {
                 content: content
             }

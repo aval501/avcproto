@@ -17,9 +17,13 @@ const MongoStore = mongo(session);
 // Controllers (route handlers)
 import * as homeController from "./controllers/home";
 import * as userController from "./controllers/user";
-import * as apiController from "./controllers/api";
 import * as contactController from "./controllers/contact";
 
+import * as systemController from "./controllers/apis/system";
+import * as teamsController from "./controllers/apis/teams";
+import * as usersController from "./controllers/apis/users";
+import * as boardsController from "./controllers/apis/boards";
+import * as transfersController from "./controllers/apis/transfers";
 
 // API keys and Passport configuration
 import * as passportConfig from "./config/passport";
@@ -106,8 +110,8 @@ app.get("/account/unlink/:provider", passportConfig.isAuthenticated, userControl
 /**
  * API examples routes.
  */
-app.get("/api", apiController.getApi);
-app.get("/api/facebook", passportConfig.isAuthenticated, passportConfig.isAuthorized, apiController.getFacebook);
+app.get("/api", systemController.getApi);
+app.get("/api/facebook", passportConfig.isAuthenticated, passportConfig.isAuthorized, systemController.getFacebook);
 
 /**
  * OAuth authentication routes. (Sign in)
@@ -116,5 +120,29 @@ app.get("/auth/facebook", passport.authenticate("facebook", { scope: ["email", "
 app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/login" }), (req, res) => {
   res.redirect(req.session.returnTo || "/");
 });
+
+app.get("/api/system", systemController.getSystem);
+
+app.get("/api/users", usersController.getUsers);
+app.post("/api/users", usersController.postUsers);
+app.get("/api/users/:id", usersController.getUser);
+app.patch("/api/users/:id", usersController.patchUser);
+
+app.get("/api/teams", teamsController.getTeams);
+app.post("/api/teams", teamsController.postTeams);
+app.get("/api/teams/:id", teamsController.getTeam);
+app.patch("/api/teams/:id", teamsController.patchTeam);
+
+app.get("/api/boards", boardsController.getBoards);
+app.post("/api/boards", boardsController.postBoards);
+app.get("/api/boards/:id", boardsController.getBoard);
+app.patch("/api/boards/:id", boardsController.patchBoard);
+app.post("/api/boards/:boardId/posts", boardsController.postPosts);
+app.get("/api/boards/:boardId/posts/:id", boardsController.getPost);
+app.patch("/api/boards/:boardId/posts/:id", boardsController.patchPost);
+
+app.get("/api/transfers", transfersController.getTransfers);
+app.post("/api/transfers", transfersController.postTransfers);
+app.get("/api/transfers/:id", transfersController.getTransfer);
 
 export default app;
