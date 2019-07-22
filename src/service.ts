@@ -78,13 +78,13 @@ async function onPeekActiveContractsAsync(elapsedTime: number, contracts: Asset[
                                         }).exec();
 
                                         const toOwnerModel = candidateOwners[Math.floor(Math.random() * candidateOwners.length)];
-                                        toOwner = await systemBusiness.getUserBusinessAsync(toOwnerModel.id);
+                                        toOwner = await systemBusiness.getUserBusinessAsync(toOwnerModel._id);
                                     } else {
                                         toOwner = await systemBusiness.getUserBusinessAsync(transfer.toId);
                                     }
 
                                     let fromOwner: OwnerBusiness = systemBusiness;
-                                    if (transfer.fromId !== systemBusiness.owner.id) {
+                                    if (transfer.fromId !== systemBusiness.owner._id) {
                                         fromOwner = await systemBusiness.getUserBusinessAsync(transfer.fromId);
                                     }
 

@@ -8,6 +8,7 @@ enum ValueHolderType {
 }
 
 interface Value {
+    id?: any;
     amount: number;
     holderType: ValueHolderType;
     owner?: Owner;

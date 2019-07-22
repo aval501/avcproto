@@ -1,5 +1,5 @@
 import { Asset, AssetModel, AssetType } from "../models/Asset";
-import { Owner, OwnerModel, OwnerType } from "../models/Owner";
+import { Owner, OwnerDoc, OwnerModel, OwnerType } from "../models/Owner";
 import SystemBusiness from "./system";
 import TeamBusiness from "./team";
 import UserBusiness from "./user";
@@ -17,7 +17,7 @@ export default class OwnerBusiness {
     }
 
     public async checkAccountAsync(): Promise<Activity[]> {
-        const ownerValues = await ValueModel.find({ owner: this.owner.id }).exec();
+        const ownerValues = await ValueModel.find({ owner: this.owner._id }).exec();
         const amount = ownerValues.reduce((sum, value) => sum + value.amount, 0);
 
         const now = new Date();
@@ -25,10 +25,10 @@ export default class OwnerBusiness {
             type: ActivityType.CheckAccount,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: this.owner.id,
+            owner: this.owner._id,
             value: undefined,
             checkAccount: {
-                id: this.owner.id,
+                id: this.owner._id,
                 name: this.owner.name,
                 amount: amount
             }
@@ -65,11 +65,11 @@ export default class OwnerBusiness {
             type: ActivityType.Transfer,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: this.owner.id,
+            owner: this.owner._id,
             transfer: {
                 type: TransferType.ValuesFromOwnerToOwner,
-                fromId: this.owner.id,
-                toId: targetBusiness.owner.id,
+                fromId: this.owner._id,
+                toId: targetBusiness.owner._id,
                 ids: userValues.map((value) => value.id)
             }
         });

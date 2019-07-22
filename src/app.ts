@@ -123,9 +123,9 @@ app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRe
 
 app.get("/api/system", systemController.getSystem);
 
-app.get("/api/users", usersController.getUsers);
+app.get("/api/users", usersController.getUsersAsync);
 app.post("/api/users", usersController.postUsers);
-app.get("/api/users/:id", usersController.getUser);
+app.get("/api/users/:id", usersController.getUserAsync);
 app.patch("/api/users/:id", usersController.patchUser);
 
 app.get("/api/teams", teamsController.getTeams);

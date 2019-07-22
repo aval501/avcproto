@@ -120,7 +120,7 @@ export class SystemDelegate {
         for (const value of assetValues) {
             value.holderType = ValueHolderType.Owner;
             value.asset = undefined;
-            value.owner = rewardOwner.id;
+            value.owner = rewardOwner._id;
             await value.save();
         }
 
@@ -134,7 +134,7 @@ export class SystemDelegate {
             transfer: {
                 type: TransferType.ValuesFromAssetToOwner,
                 fromId: assetId,
-                toId: rewardOwner.id,
+                toId: rewardOwner._id,
                 ids: assetValues.map(value => value.id)
             }
         });
@@ -149,7 +149,7 @@ export default class SystemBusiness extends OwnerBusiness {
 
     constructor(private _system: Owner) {
         super(_system);
-        this._delegate = new SystemDelegate(this.owner.id);
+        this._delegate = new SystemDelegate(this.owner._id);
     }
 
     public static async getBusinessAsync(): Promise<SystemBusiness> {
@@ -195,7 +195,7 @@ export default class SystemBusiness extends OwnerBusiness {
             value: systemValue,
             create: {
                 owner: {
-                    id: system.id,
+                    id: system._id,
                     name: system.name,
                     type: system.type,
                     memberOfIds: []
@@ -222,7 +222,7 @@ export default class SystemBusiness extends OwnerBusiness {
             contractTerm: airdropTerm,
             transfer: {
                 type: TransferType.ValuesFromOwnerToOwner,
-                fromId: system.id,
+                fromId: system._id,
                 toId: undefined,
                 ids: undefined
             }
@@ -247,14 +247,14 @@ export default class SystemBusiness extends OwnerBusiness {
             type: ActivityType.Create,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: system.id,
+            owner: system._id,
             value: undefined,
             create: {
                 asset: {
                     id: systemAirDropContract.id,
                     type: systemAirDropContract.type,
                     parentId: undefined,
-                    ownerId: systemAirDropContract.owner.id
+                    ownerId: systemAirDropContract.owner._id
                 }
             }
         });
@@ -276,14 +276,14 @@ export default class SystemBusiness extends OwnerBusiness {
             type: ActivityType.Create,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: system.id,
+            owner: system._id,
             value: undefined,
             create: {
                 asset: {
                     id: systemBoard.id,
                     type: systemBoard.type,
                     parentId: undefined,
-                    ownerId: systemBoard.owner.id
+                    ownerId: systemBoard.owner._id
                 }
             }
         });
@@ -322,7 +322,7 @@ export default class SystemBusiness extends OwnerBusiness {
             createdTime: now,
             modifiedTime: now,
             type: OwnerType.User,
-            memberOf: [this._system.id]
+            memberOf: [this._system._id]
         });
         const userBusiness = new UserBusiness(firstCitizen, this._delegate);
 
@@ -334,7 +334,7 @@ export default class SystemBusiness extends OwnerBusiness {
             value: undefined,
             create: {
                 owner: {
-                    id: firstCitizen.id,
+                    id: firstCitizen._id,
                     name: firstCitizen.name,
                     type: firstCitizen.type,
                     memberOfIds: firstCitizen.memberOf
@@ -354,7 +354,7 @@ export default class SystemBusiness extends OwnerBusiness {
             createdTime: now,
             modifiedTime: now,
             type: OwnerType.Team,
-            memberOf: [this._system.id]
+            memberOf: [this._system._id]
         });
         const teamBusiness = new TeamBusiness(directors);
 
@@ -362,11 +362,11 @@ export default class SystemBusiness extends OwnerBusiness {
             type: ActivityType.Create,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: this._system.id,
+            owner: this._system._id,
             value: undefined,
             create: {
                 owner: {
-                    id: directors.id,
+                    id: directors._id,
                     name: directors.name,
                     type: directors.type,
                     memberOfIds: directors.memberOf
@@ -398,7 +398,7 @@ export default class SystemBusiness extends OwnerBusiness {
                     id: directorsBoard.id,
                     type: directorsBoard.type,
                     parentId: undefined,
-                    ownerId: directorsBoard.owner.id
+                    ownerId: directorsBoard.owner._id
                 }
             }
         });

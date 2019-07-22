@@ -1,4 +1,5 @@
 import { Document, Schema, model } from "mongoose";
+import { Value, ValueDoc } from "./Value";
 // import { Asset } from "./asset";
 // import { Value } from "./value";
 // import { Activity } from "./activity";
@@ -10,12 +11,20 @@ enum OwnerType {
     User = "user"
 }
 
-interface Owner extends Document {
+interface Owner {
+    _id: any;
     type: OwnerType;
     name: string;
     createdTime: Date;
     modifiedTime: Date;
-    memberOf: Owner[];
+    memberOf: OwnerDoc[];
+    values: {
+        amount: number;
+        values: Value[];
+    };
+}
+
+interface OwnerDoc extends Owner, Document {
 }
 
 const OwnerSchema = new Schema({
@@ -31,5 +40,5 @@ const OwnerSchema = new Schema({
 });
 
 // IdSchema.index({ meta: 1 });
-const OwnerModel = model<Owner>("Owner", OwnerSchema);
-export { Owner, OwnerType, OwnerModel };
+const OwnerModel = model<OwnerDoc>("Owner", OwnerSchema);
+export { Owner, OwnerDoc, OwnerType, OwnerModel };

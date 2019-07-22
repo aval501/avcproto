@@ -28,12 +28,12 @@ export default class UserBusiness extends OwnerBusiness {
             type: ActivityType.Transfer,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: this._user.id,
+            owner: this._user._id,
             value: undefined,
             transfer: {
                 type: TransferType.AssetsFromOwnerToOwner,
-                fromId: this._user.id,
-                toId: targetBusiness.owner.id,
+                fromId: this._user._id,
+                toId: targetBusiness.owner._id,
                 ids: [firstPost.id]
             }
         });
@@ -55,7 +55,7 @@ export default class UserBusiness extends OwnerBusiness {
             type: AssetType.Expression,
             createdTime: now,
             modifiedTime: now,
-            owner: this._user.id,
+            owner: this._user._id,
             parent: targetAsset,
             expression: {
                 type: expressionType
@@ -66,14 +66,14 @@ export default class UserBusiness extends OwnerBusiness {
             type: ActivityType.Create,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: this._user.id,
+            owner: this._user._id,
             // value: expressionValue,
             create: {
                 asset: {
                     id: firstExpression.id,
                     type: firstExpression.type,
                     parentId: firstExpression.parent.id,
-                    ownerId: this._user.id
+                    ownerId: this._user._id
                 }
             }
         });
@@ -91,7 +91,7 @@ export default class UserBusiness extends OwnerBusiness {
             type: AssetType.Comment,
             createdTime: now,
             modifiedTime: now,
-            owner: this._user.id,
+            owner: this._user._id,
             parent: post,
             post: {
                 content: `${content}`
@@ -102,14 +102,14 @@ export default class UserBusiness extends OwnerBusiness {
             type: ActivityType.Create,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: this._user.id,
+            owner: this._user._id,
             // value: commentValue,
             create: {
                 asset: {
                     id: firstComment.id,
                     type: firstComment.type,
                     parentId: post.id,
-                    ownerId: this._user.id
+                    ownerId: this._user._id
                 }
             }
         });
@@ -127,7 +127,7 @@ export default class UserBusiness extends OwnerBusiness {
             type: AssetType.Post,
             createdTime: now,
             modifiedTime: now,
-            owner: this._user.id,
+            owner: this._user._id,
             parent: board,
             post: {
                 content: content
@@ -138,14 +138,14 @@ export default class UserBusiness extends OwnerBusiness {
             type: ActivityType.Create,
             timestamp: now,
             status: ActivityStatus.Completed,
-            owner: this._user.id,
+            owner: this._user._id,
             // value: postValue,
             create: {
                 asset: {
                     id: post.id,
                     type: post.type,
                     parentId: board.id,
-                    ownerId: this._user.id
+                    ownerId: this._user._id
                 }
             }
         });
