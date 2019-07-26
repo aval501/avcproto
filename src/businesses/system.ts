@@ -153,12 +153,12 @@ export default class SystemBusiness extends OwnerBusiness {
     }
 
     public static async getBusinessAsync(): Promise<SystemBusiness> {
-        const system = await OwnerModel.findOne({ type: OwnerType.System });
-        if (!system) {
+        const systemDoc = await OwnerModel.findOne({ type: OwnerType.System });
+        if (!systemDoc) {
             throw `[ERROR] system not found.`;
         }
 
-        return new SystemBusiness(system);
+        return new SystemBusiness(systemDoc.toObject());
     }
 
     public static async resetAsync(): Promise<SystemBusiness> {

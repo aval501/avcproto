@@ -2,33 +2,31 @@
 
 import graph from "fbgraph";
 import { Response, Request, NextFunction } from "express";
+import { Owner, OwnerModel } from "../../models/Owner";
+import SystemBusiness from "../../businesses/system";
+import { Value, ValueModel, ValueHolderType } from "../../models/Value";
 
-export const getSystem = (req: Request, res: Response) => {
-    throw Error("not implemented yet.");
-};
+export const getSystemAsync = async (req: Request, res: Response) => {
+    const includes: string[] = req.query["include"];
 
-/**
- * GET /api
- * List of API examples.
- */
-export const getApi = (req: Request, res: Response) => {
-    res.render("api/index", {
-        title: "API Examples"
-    });
-};
+    const systemBiz = await SystemBusiness.getBusinessAsync();
+    const system = systemBiz.owner;
 
-/**
- * GET /api/facebook
- * Facebook API example.
- */
-export const getFacebook = (req: Request, res: Response, next: NextFunction) => {
-    const token = req.user.tokens.find((token: any) => token.kind === "facebook");
-    graph.setAccessToken(token.accessToken);
-    graph.get(`${req.user.facebook}?fields=id,name,email,first_name,last_name,gender,link,locale,timezone`, (err: Error, results: graph.FacebookUser) => {
-        if (err) { return next(err); }
-        res.render("api/facebook", {
-            title: "Facebook API",
-            profile: results
-        });
-    });
+    if (!!includes && includes.indexOf("values") >= 0) {
+        const values: Value[] = await ValueModel.find({ holderType: ValueHolderType.Owner, owner: system._id }).lean().exec();
+        system.values = {
+            amount: values.reduce((sum, value) => value.amount, 0),
+            values: values
+        };
+    }
+
+    if (!!includes && includes.indexOf("members") >= 0) {
+        const members: Owner[] = await OwnerModel.find({ "memberOf": system._id }).lean().exec();
+        system.members = {
+            total: members.length,
+            members: members
+        };
+    }
+
+    res.json(system);
 };

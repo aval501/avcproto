@@ -110,8 +110,8 @@ app.get("/account/unlink/:provider", passportConfig.isAuthenticated, userControl
 /**
  * API examples routes.
  */
-app.get("/api", systemController.getApi);
-app.get("/api/facebook", passportConfig.isAuthenticated, passportConfig.isAuthorized, systemController.getFacebook);
+// app.get("/api", systemController.getApi);
+// app.get("/api/facebook", passportConfig.isAuthenticated, passportConfig.isAuthorized, systemController.getFacebook);
 
 /**
  * OAuth authentication routes. (Sign in)
@@ -121,7 +121,7 @@ app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRe
   res.redirect(req.session.returnTo || "/");
 });
 
-app.get("/api/system", systemController.getSystem);
+app.get("/api/system", systemController.getSystemAsync);
 
 app.get("/api/users", usersController.getUsersAsync);
 app.post("/api/users", usersController.postUsers);
@@ -141,8 +141,8 @@ app.post("/api/boards/:boardId/posts", boardsController.postPosts);
 app.get("/api/boards/:boardId/posts/:id", boardsController.getPost);
 app.patch("/api/boards/:boardId/posts/:id", boardsController.patchPost);
 
-app.get("/api/transfers", transfersController.getTransfers);
-app.post("/api/transfers", transfersController.postTransfers);
-app.get("/api/transfers/:id", transfersController.getTransfer);
+app.get("/api/transfers", transfersController.getTransfersAsync);
+app.post("/api/transfers", transfersController.postTransfersAsync);
+app.get("/api/transfers/:id", transfersController.getTransferAsync);
 
 export default app;
