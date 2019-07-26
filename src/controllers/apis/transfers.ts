@@ -1,14 +1,23 @@
 "use strict";
 
 import { Response, Request, NextFunction } from "express";
-import { ActivityModel, ActivityType, Activity } from "../../models/Activity";
+import { ActivityModel, ActivityType, Activity, TransferType } from "../../models/Activity";
 import { AssetType } from "../../models/Asset";
 import SystemBusiness from "../../businesses/system";
+import { Owner } from "../../models/Owner";
 
 export const getTransfersAsync = async (req: Request, res: Response) => {
     const activities = await ActivityModel.find({ type: ActivityType.Transfer }).exec();
     res.json(activities);
 };
+
+interface TransferRequest {
+    type: TransferType;
+    from: string; // support Object ID and name
+    to: string; // support Object ID and name
+    amount?: number;
+    assetIds?: string[];
+}
 
 export const postTransfersAsync = async (req: Request, res: Response) => {
     const transfers: Activity[] = req.body;
