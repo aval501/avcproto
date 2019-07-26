@@ -22,6 +22,11 @@ interface Owner {
         amount: number;
         values: Value[];
     };
+
+    members: {
+        total: number;
+        members: Owner[];
+    };
 }
 
 interface OwnerDoc extends Owner, Document {

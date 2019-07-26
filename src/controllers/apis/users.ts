@@ -16,7 +16,7 @@ export const getUsersAsync = async (req: Request, res: Response) => {
 
 export const postUsers = async (req: Request, res: Response) => {
     const userDocs: OwnerDoc[] = req.body;
-    if (!userDocs || userDocs.length === 0) {
+    if (!userDocs || !userDocs.length || userDocs.length === 0) {
         res.status(400).send("[ERROR] Invalid request body passed in. Expecting list of users.");
     }
 
@@ -62,9 +62,6 @@ export const getUserAsync = async (req: Request, res: Response) => {
         };
     }
 
-    // const newuser = {};
-    // newuser.values = { amount: 10 };
-
     res.json(user);
 };
 
@@ -95,12 +92,6 @@ export const patchUserAsync = async (req: Request, res: Response) => {
             throw `[ERROR] Failed to update user. ID: ${id}, Body: ${req.body}`;
         }
     }).exec();
-
-    // const result = await OwnerModel.insertMany(userDocs, (error, docs) => {
-    //     if (!!error) {
-    //         throw `[ERROR] Failed to insert some user: ${error}`;
-    //     }
-    // });
 
     res.json(result);
 };

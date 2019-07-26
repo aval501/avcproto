@@ -128,10 +128,10 @@ app.post("/api/users", usersController.postUsers);
 app.get("/api/users/:id", usersController.getUserAsync);
 app.patch("/api/users/:id", usersController.patchUserAsync);
 
-app.get("/api/teams", teamsController.getTeams);
-app.post("/api/teams", teamsController.postTeams);
-app.get("/api/teams/:id", teamsController.getTeam);
-app.patch("/api/teams/:id", teamsController.patchTeam);
+app.get("/api/teams", teamsController.getTeamsAsync);
+app.post("/api/teams", teamsController.postTeamsAsync);
+app.get("/api/teams/:id", teamsController.getTeamAsync);
+app.patch("/api/teams/:id", teamsController.patchTeamAsync);
 
 app.get("/api/boards", boardsController.getBoards);
 app.post("/api/boards", boardsController.postBoards);

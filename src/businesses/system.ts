@@ -292,7 +292,7 @@ export default class SystemBusiness extends OwnerBusiness {
     }
 
     public async getUserBusinessAsync(id: string): Promise<UserBusiness> {
-        const user = await OwnerModel.findById(id);
+        const user = await OwnerModel.findOne({ type: OwnerType.User, "_id": id }).lean().exec();
         if (!user) {
             console.warn(`[WARN] No user found with given ID: ${id}`);
             return undefined;
@@ -302,9 +302,10 @@ export default class SystemBusiness extends OwnerBusiness {
     }
 
     public async getTeamBusinessAsync(id: string): Promise<TeamBusiness> {
-        const team = await OwnerModel.findById(id);
+        const team = await OwnerModel.findOne({ type: OwnerType.Team, "_id": id }).lean().exec();
         if (!team) {
-            throw `[ERROR] no team found!`;
+            console.warn(`[WARN] No team found with given ID: ${id}`);
+            return undefined;
         }
 
         return new TeamBusiness(team);
