@@ -23,10 +23,10 @@ export const postUsers = async (req: Request, res: Response) => {
     const systemBiz = await SystemBusiness.getBusinessAsync();
 
     userDocs.forEach(doc => {
-        doc.createdTime = new Date(),
-        doc.modifiedTime = new Date(),
-        doc.type = OwnerType.User,
-        doc.memberOf = [systemBiz.owner._id]
+        doc.createdTime = new Date();
+        doc.modifiedTime = new Date();
+        doc.type = OwnerType.User;
+        doc.memberOf = [systemBiz.owner._id];
     });
 
     const result = await OwnerModel.insertMany(userDocs, (error, docs) => {
@@ -68,6 +68,39 @@ export const getUserAsync = async (req: Request, res: Response) => {
     res.json(user);
 };
 
-export const patchUser = (req: Request, res: Response) => {
-    throw Error("not implemented yet.");
+export const patchUserAsync = async (req: Request, res: Response) => {
+    const id: string = req.params["id"];
+    if (!ObjectId.isValid(id)) {
+        res.status(400).send(`[ERROR] Invalid user ID passed: ${id}`);
+        return;
+    }
+
+    const userDoc: OwnerDoc = req.body;
+    if (!userDoc) {
+        res.status(400).send("[ERROR] Invalid request body passed in. Expecting user properties to be updated.");
+        return;
+    }
+
+    const systemBiz = await SystemBusiness.getBusinessAsync();
+    const userBiz = await systemBiz.getUserBusinessAsync(id);
+    if (!userBiz) {
+        res.status(404).send(`[ERROR] Couldn't find any user with id: ${id}`);
+        return;
+    }
+
+    userDoc.modifiedTime = new Date();
+
+    const result = await OwnerModel.findByIdAndUpdate(id, userDoc, (error, doc) => {
+        if (!!error) {
+            throw `[ERROR] Failed to update user. ID: ${id}, Body: ${req.body}`;
+        }
+    }).exec();
+
+    // const result = await OwnerModel.insertMany(userDocs, (error, docs) => {
+    //     if (!!error) {
+    //         throw `[ERROR] Failed to insert some user: ${error}`;
+    //     }
+    // });
+
+    res.json(result);
 };

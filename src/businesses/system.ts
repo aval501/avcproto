@@ -294,7 +294,8 @@ export default class SystemBusiness extends OwnerBusiness {
     public async getUserBusinessAsync(id: string): Promise<UserBusiness> {
         const user = await OwnerModel.findById(id);
         if (!user) {
-            throw `[ERROR] no user found!`;
+            console.warn(`[WARN] No user found with given ID: ${id}`);
+            return undefined;
         }
 
         return new UserBusiness(user, this._delegate);

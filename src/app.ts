@@ -126,7 +126,7 @@ app.get("/api/system", systemController.getSystem);
 app.get("/api/users", usersController.getUsersAsync);
 app.post("/api/users", usersController.postUsers);
 app.get("/api/users/:id", usersController.getUserAsync);
-app.patch("/api/users/:id", usersController.patchUser);
+app.patch("/api/users/:id", usersController.patchUserAsync);
 
 app.get("/api/teams", teamsController.getTeams);
 app.post("/api/teams", teamsController.postTeams);
