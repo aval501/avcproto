@@ -22,18 +22,24 @@ export const postUsers = async (req: Request, res: Response) => {
 
     const systemBiz = await SystemBusiness.getBusinessAsync();
 
-    userDocs.forEach(doc => {
-        doc.createdTime = new Date();
-        doc.modifiedTime = new Date();
-        doc.type = OwnerType.User;
-        doc.memberOf = [systemBiz.owner._id];
-    });
+    const result: {
+        requested: number,
+        success: number,
+        failed: OwnerDoc[]
+    } = {
+        requested: userDocs.length,
+        success: 0,
+        failed: []
+    };
 
-    const result = await OwnerModel.insertMany(userDocs, (error, docs) => {
-        if (!!error) {
-            throw `[ERROR] Failed to insert some user: ${error}`;
+    for (const userDoc of userDocs) {
+        const userBiz = await systemBiz.createUserAsync(userDoc.name);
+        if (!userBiz) {
+            result.failed.push(userDoc);
+        } else {
+            result.success += 1;
         }
-    });
+    }
 
     res.json(result);
 };

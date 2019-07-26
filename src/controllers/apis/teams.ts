@@ -22,18 +22,24 @@ export const postTeamsAsync = async (req: Request, res: Response) => {
 
     const systemBiz = await SystemBusiness.getBusinessAsync();
 
-    teamDocs.forEach(doc => {
-        doc.createdTime = new Date();
-        doc.modifiedTime = new Date();
-        doc.type = OwnerType.Team;
-        doc.memberOf = [systemBiz.owner._id];
-    });
+    const result: {
+        requested: number,
+        success: number,
+        failed: OwnerDoc[]
+    } = {
+        requested: teamDocs.length,
+        success: 0,
+        failed: []
+    };
 
-    const result = await OwnerModel.insertMany(teamDocs, (error, docs) => {
-        if (!!error) {
-            throw `[ERROR] Failed to insert some team: ${error}`;
+    for (const teamDoc of teamDocs) {
+        const teamBiz = await systemBiz.createTeamAsync(teamDoc.name);
+        if (!teamBiz) {
+            result.failed.push(teamDoc);
+        } else {
+            result.success += 1;
         }
-    });
+    }
 
     res.json(result);
 };
