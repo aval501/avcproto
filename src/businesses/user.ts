@@ -93,7 +93,7 @@ export default class UserBusiness extends OwnerBusiness {
             modifiedTime: now,
             owner: this._user._id,
             parent: post,
-            post: {
+            comment: {
                 content: `${content}`
             }
         });

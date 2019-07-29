@@ -291,6 +291,39 @@ export default class SystemBusiness extends OwnerBusiness {
         return systemBusiness;
     }
 
+    public async createBoardAsync(owner: Owner): Promise<Activity[]> {
+        const now = new Date();
+        const board = await AssetModel.create({
+            type: AssetType.Board,
+            createdTime: now,
+            modifiedTime: now,
+            owner: owner,
+            parent: undefined,
+            board: {
+                name: "General",
+                description: `${owner.name}'s general board.`
+            }
+        });
+
+        const createBoardActivity = await ActivityModel.create({
+            type: ActivityType.Create,
+            timestamp: now,
+            status: ActivityStatus.Completed,
+            owner: this._system,
+            value: undefined,
+            create: {
+                asset: {
+                    id: board.id,
+                    type: board.type,
+                    parentId: undefined,
+                    ownerId: board.owner._id
+                }
+            }
+        });
+
+        return [createBoardActivity];
+    }
+
     public async getUserBusinessAsync(id: string): Promise<UserBusiness> {
         const user = await OwnerModel.findOne({ type: OwnerType.User, "_id": id }).lean().exec();
         if (!user) {
@@ -358,6 +391,7 @@ export default class SystemBusiness extends OwnerBusiness {
             type: OwnerType.Team,
             memberOf: [this._system._id]
         });
+
         const teamBusiness = new TeamBusiness(directors);
 
         await ActivityModel.create({
@@ -377,33 +411,7 @@ export default class SystemBusiness extends OwnerBusiness {
         });
 
         console.log(`creating ${name}'s team board..`);
-        const directorsBoard = await AssetModel.create({
-            type: AssetType.Board,
-            createdTime: now,
-            modifiedTime: now,
-            owner: directors,
-            parent: undefined,
-            board: {
-                name: "General",
-                description: `${name}'s general board.`
-            }
-        });
-
-        await ActivityModel.create({
-            type: ActivityType.Create,
-            timestamp: now,
-            status: ActivityStatus.Completed,
-            owner: this._system,
-            value: undefined,
-            create: {
-                asset: {
-                    id: directorsBoard.id,
-                    type: directorsBoard.type,
-                    parentId: undefined,
-                    ownerId: directorsBoard.owner._id
-                }
-            }
-        });
+        const createBoardActivities = await this.createBoardAsync(directors);
 
         return teamBusiness;
     }

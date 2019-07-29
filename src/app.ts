@@ -133,8 +133,8 @@ app.post("/api/teams", teamsController.postTeamsAsync);
 app.get("/api/teams/:id", teamsController.getTeamAsync);
 app.patch("/api/teams/:id", teamsController.patchTeamAsync);
 
-app.get("/api/boards", boardsController.getBoards);
-app.post("/api/boards", boardsController.postBoards);
+app.get("/api/boards", boardsController.getBoardsAsync);
+app.post("/api/boards", boardsController.postBoardsAsync);
 app.get("/api/boards/:id", boardsController.getBoard);
 app.patch("/api/boards/:id", boardsController.patchBoard);
 app.post("/api/boards/:boardId/posts", boardsController.postPosts);

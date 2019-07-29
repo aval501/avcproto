@@ -15,33 +15,15 @@ export const getTeamsAsync = async (req: Request, res: Response) => {
 };
 
 export const postTeamsAsync = async (req: Request, res: Response) => {
-    const teamDocs: OwnerDoc[] = req.body;
-    if (!teamDocs || !teamDocs.length || teamDocs.length === 0) {
-        res.status(400).send("[ERROR] Invalid request body passed in. Expecting list of teams.");
+    const teamDoc: OwnerDoc = req.body;
+    if (!teamDoc || !teamDoc.name) {
+        res.status(400).send("[ERROR] Invalid request body passed in. Expecting 'name'.");
     }
 
     const systemBiz = await SystemBusiness.getBusinessAsync();
+    const teamBiz = await systemBiz.createTeamAsync(teamDoc.name);
 
-    const result: {
-        requested: number,
-        success: number,
-        failed: OwnerDoc[]
-    } = {
-        requested: teamDocs.length,
-        success: 0,
-        failed: []
-    };
-
-    for (const teamDoc of teamDocs) {
-        const teamBiz = await systemBiz.createTeamAsync(teamDoc.name);
-        if (!teamBiz) {
-            result.failed.push(teamDoc);
-        } else {
-            result.success += 1;
-        }
-    }
-
-    res.json(result);
+    res.json(teamBiz.owner);
 };
 
 export const getTeamAsync = async (req: Request, res: Response) => {

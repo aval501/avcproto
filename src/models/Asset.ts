@@ -53,6 +53,14 @@ const PostAssetSchema = new Schema({
     content: String
 });
 
+interface CommentAsset {
+    content: string;
+}
+
+const CommentAssetSchema = new Schema({
+    content: String
+});
+
 enum ExpressionType {
     Worth = "worth",
     NotWorth = "notworth"
@@ -74,6 +82,7 @@ interface Asset extends Document {
     parent: Asset;
     board?: BoardAsset;
     post?: PostAsset;
+    comment?: CommentAsset;
     expression?: ExpressionAsset;
     contract?: ContractAsset;
 }
@@ -86,10 +95,11 @@ const AssetSchema = new Schema({
     parent: { type: Schema.Types.ObjectId, ref: "Asset" },
     board: BoardAssetSchema,
     post: PostAssetSchema,
+    comment: CommentAssetSchema,
     expression: ExpressionAssetSchema,
     contract: ContractAssetSchema
 });
 
 // AssetSchema.index({ meta: 1 });
 const AssetModel = model<Asset>("Asset", AssetSchema);
-export { Asset, AssetType, ExpressionType, ContractStatus, AssetModel };
+export { Asset, PostAsset, BoardAsset, CommentAsset, ExpressionAsset, AssetType, ExpressionType, ContractStatus, AssetModel };

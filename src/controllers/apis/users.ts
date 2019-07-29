@@ -15,33 +15,15 @@ export const getUsersAsync = async (req: Request, res: Response) => {
 };
 
 export const postUsers = async (req: Request, res: Response) => {
-    const userDocs: OwnerDoc[] = req.body;
-    if (!userDocs || !userDocs.length || userDocs.length === 0) {
-        res.status(400).send("[ERROR] Invalid request body passed in. Expecting list of users.");
+    const userDoc: OwnerDoc = req.body;
+    if (!userDoc || !userDoc.name) {
+        res.status(400).send("[ERROR] Invalid request body passed in. Expecting 'name'.");
     }
 
     const systemBiz = await SystemBusiness.getBusinessAsync();
+    const userBiz = await systemBiz.createUserAsync(userDoc.name);
 
-    const result: {
-        requested: number,
-        success: number,
-        failed: OwnerDoc[]
-    } = {
-        requested: userDocs.length,
-        success: 0,
-        failed: []
-    };
-
-    for (const userDoc of userDocs) {
-        const userBiz = await systemBiz.createUserAsync(userDoc.name);
-        if (!userBiz) {
-            result.failed.push(userDoc);
-        } else {
-            result.success += 1;
-        }
-    }
-
-    res.json(result);
+    res.json(userBiz.owner);
 };
 
 export const getUserAsync = async (req: Request, res: Response) => {
@@ -63,7 +45,7 @@ export const getUserAsync = async (req: Request, res: Response) => {
     if (!!includes && includes.indexOf("values") >= 0) {
         const values: Value[] = await ValueModel.find({ holderType: ValueHolderType.Owner, owner: user._id }).lean().exec();
         user.values = {
-            amount: values.reduce((sum, value) => value.amount, 0),
+            amount: values.reduce((sum, value) => sum + value.amount, 0),
             values: values
         };
     }

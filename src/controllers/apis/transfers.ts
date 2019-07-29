@@ -15,7 +15,7 @@ export const getTransfersAsync = async (req: Request, res: Response) => {
 
 interface TransferRequest {
     type: TransferType;
-    from: string; // support Object ID and name
+    from: string; // TODO: to be replaced by token identity.
     to: string; // support Object ID and name
     amount?: number;
     assetIds?: string[];
@@ -23,7 +23,7 @@ interface TransferRequest {
 
 export const postTransfersAsync = async (req: Request, res: Response) => {
     const transfer: TransferRequest = req.body;
-    if (!transfer || !transfer.from || !transfer.to || (!transfer.amount && !transfer.assetIds)) {
+    if (!transfer || !transfer.to || (!transfer.amount && !transfer.assetIds)) {
         res.status(400).send("[ERROR] Invalid request body passed in. Expecting 'from', 'to', and 'amount' or 'assetIds'.");
     }
 
