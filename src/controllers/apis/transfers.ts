@@ -5,6 +5,8 @@ import { ActivityModel, ActivityType, Activity, TransferType } from "../../model
 import { AssetType } from "../../models/Asset";
 import SystemBusiness from "../../businesses/system";
 import { Owner } from "../../models/Owner";
+import { transformFile } from "@babel/core";
+import { assertModuleDeclaration } from "babel-types";
 
 export const getTransfersAsync = async (req: Request, res: Response) => {
     const activities = await ActivityModel.find({ type: ActivityType.Transfer }).exec();
@@ -20,32 +22,21 @@ interface TransferRequest {
 }
 
 export const postTransfersAsync = async (req: Request, res: Response) => {
-    const transfers: Activity[] = req.body;
-    if (!transfers || !transfers.length || transfers.length === 0) {
-        res.status(400).send("[ERROR] Invalid request body passed in. Expecting list of transfers.");
+    const transfer: TransferRequest = req.body;
+    if (!transfer || !transfer.from || !transfer.to || (!transfer.amount && !transfer.assetIds)) {
+        res.status(400).send("[ERROR] Invalid request body passed in. Expecting 'from', 'to', and 'amount' or 'assetIds'.");
     }
 
     const systemBiz = await SystemBusiness.getBusinessAsync();
+    const fromUserBiz = await systemBiz.getUserBusinessAsync(transfer.from);
+    const toUserBiz = await systemBiz.getUserBusinessAsync(transfer.to);
 
-    const result: {
-        requested: number,
-        success: number,
-        failed: Activity[]
-    } = {
-        requested: transfers.length,
-        success: 0,
-        failed: []
-    };
-
-    // for (const transfer of transfers) {
-    //     transfer.
-    //     const userBiz = await systemBiz.createUserAsync(userDoc.name);
-    //     if (!userBiz) {
-    //         result.failed.push(userDoc);
-    //     } else {
-    //         result.success += 1;
-    //     }
-    // }
+    let result: Activity[];
+    if (!!transfer.amount) {
+        result = await fromUserBiz.transferValueAsync(toUserBiz, transfer.amount);
+    } else if (!!transfer.assetIds) {
+        // fromUserBiz.transferAssetsAsync(toUserBiz, transfer.assetIds);
+    }
 
     res.json(result);
 };
