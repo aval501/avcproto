@@ -102,4 +102,4 @@ const AssetSchema = new Schema({
 
 // AssetSchema.index({ meta: 1 });
 const AssetModel = model<Asset>("Asset", AssetSchema);
-export { Asset, PostAsset, BoardAsset, CommentAsset, ExpressionAsset, AssetType, ExpressionType, ContractStatus, AssetModel };
+export { Asset, PostAsset, BoardAsset, CommentAsset, ExpressionAsset, ContractAsset, AssetType, ExpressionType, ContractStatus, AssetModel };

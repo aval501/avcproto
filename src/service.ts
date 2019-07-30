@@ -5,9 +5,9 @@ import bluebird from "bluebird";
 import { MONGODB_URI } from "./util/secrets";
 import { Owner, OwnerType, OwnerModel } from "./models/Owner";
 import { ActivityModel, ActivityType, ActivityStatus, TransferType, Activity } from "./models/Activity";
-import { AssetModel, AssetType, ExpressionType, ContractStatus, Asset } from "./models/Asset";
+import { AssetModel, AssetType, ExpressionType, ContractStatus, Asset, ContractAsset } from "./models/Asset";
 import { ValueModel, Value, ValueHolderType, ValueDoc } from "./models/Value";
-import { TermType } from "./models/ContractTerm";
+import { TermType, ContractTerm } from "./models/ContractTerm";
 import UserBusiness from "./businesses/user";
 import SystemBusiness from "./businesses/system";
 import OwnerBusiness from "./businesses/owner";
@@ -40,67 +40,81 @@ const serviceState = {
     while (!serviceState.terminate) {
         const activeContracts = await AssetModel.find({ "type": AssetType.Contract, "contract.status": ContractStatus.Active }).exec();
         console.log(`${activeContracts.length} active contracts found..`);
+
         await onPeekActiveContractsAsync(elapsedTime, activeContracts);
-
-        // if (elapsedTime % serviceState.minOrderingInterval === 0)
-        //     onOrderIntervalAsync(elapsedTime, strategies);
-
-        // if (elapsedTime % serviceState.benchmarkInterval === 0)
-        //     onBenchmarkIntervalAsync(elapsedTime, strategies);
-
         await waitAsync(serviceState.listenerInterval);
+
         elapsedTime += serviceState.listenerInterval;
     }
 
     mongoose.connection.close();
-    console.log(`Terminating worker...`);
+    console.log(`Terminating service...`);
 })();
 
 async function onPeekActiveContractsAsync(elapsedTime: number, contracts: Asset[]): Promise<void> {
-    const systemBusiness: SystemBusiness = await SystemBusiness.getBusinessAsync();
-
     for (const contract of contracts) {
         const terms = contract.contract.terms;
+
         for (const term of terms) {
-            if (term.type === TermType.RecurringTransfer && elapsedTime % term.interval === 0) {
-                const activities = await ActivityModel.find({ contractTerm: term, status: ActivityStatus.Pending });
-                for (const activity of activities) {
-                    switch (activity.type) {
-                        case ActivityType.Transfer:
-                            const transfer = activity.transfer;
-                            switch (transfer.type) {
-                                case TransferType.ValuesFromOwnerToOwner:
-                                    let toOwner: OwnerBusiness;
-                                    if (!transfer.toId) {
-                                        const candidateOwners = await OwnerModel.find({
-                                            type: { "$nin": [OwnerType.System] },
-                                            _id: { "$ne": transfer.fromId }
-                                        }).exec();
+            await processContractTermAsync(elapsedTime, term);
+        }
+    }
+}
 
-                                        const toOwnerModel = candidateOwners[Math.floor(Math.random() * candidateOwners.length)];
-                                        toOwner = await systemBusiness.getUserBusinessAsync(toOwnerModel._id);
-                                    } else {
-                                        toOwner = await systemBusiness.getUserBusinessAsync(transfer.toId);
-                                    }
+async function processContractTermAsync(elapsedTime: number, term: ContractTerm): Promise<void> {
+    // TODO: may need to change into command or strategy pattern.
+    switch (term.type) {
+        case TermType.RecurringTransfer:
+            // const activities = await ActivityModel.find({ contractTerm: term, status: ActivityStatus.Pending });
+            await processRecurringTransferTermAsync(elapsedTime, term);
+            break;
+        default:
+            break;
+    }
+}
 
-                                    let fromOwner: OwnerBusiness = systemBusiness;
-                                    if (transfer.fromId !== systemBusiness.owner._id) {
-                                        fromOwner = await systemBusiness.getUserBusinessAsync(transfer.fromId);
-                                    }
+async function processRecurringTransferTermAsync(elapsedTime: number, term: ContractTerm): Promise<void> {
+    if (elapsedTime % term.interval !== 0) {
+        return;
+    }
 
-                                    await checkAndLogAccounts([fromOwner, toOwner]);
-                                    const transferActivity = await fromOwner.transferValueAsync(toOwner, term.recurringTransfer.amount);
-                                    await checkAndLogAccounts([fromOwner, toOwner]);
-                                    break;
-                                default:
-                                    break;
-                            }
+    const systemBusiness: SystemBusiness = await SystemBusiness.getBusinessAsync();
+    const activities = await ActivityModel.find({ contractTerm: term, status: ActivityStatus.Pending });
 
-                            break;
-                        default: break;
-                    }
+    for (const activity of activities) {
+        switch (activity.type) {
+            case ActivityType.Transfer:
+                const transfer = activity.transfer;
+                switch (transfer.type) {
+                    case TransferType.ValuesFromOwnerToOwner:
+                        let toOwner: OwnerBusiness;
+                        if (!transfer.toId) {
+                            const candidateOwners = await OwnerModel.find({
+                                type: { "$nin": [OwnerType.System] },
+                                _id: { "$ne": transfer.fromId }
+                            }).exec();
+
+                            const toOwnerModel = candidateOwners[Math.floor(Math.random() * candidateOwners.length)];
+                            toOwner = await systemBusiness.getUserBusinessAsync(toOwnerModel._id);
+                        } else {
+                            toOwner = await systemBusiness.getUserBusinessAsync(transfer.toId);
+                        }
+
+                        let fromOwner: OwnerBusiness = systemBusiness;
+                        if (transfer.fromId !== systemBusiness.owner._id) {
+                            fromOwner = await systemBusiness.getUserBusinessAsync(transfer.fromId);
+                        }
+
+                        await checkAndLogAccounts([fromOwner, toOwner]);
+                        const transferActivity = await fromOwner.transferValueAsync(toOwner, term.recurringTransfer.amount);
+                        await checkAndLogAccounts([fromOwner, toOwner]);
+                        break;
+                    default:
+                        break;
                 }
-            }
+
+                break;
+            default: break;
         }
     }
 }
@@ -117,21 +131,3 @@ async function checkAndLogAccounts(owners: OwnerBusiness[]): Promise<void> {
 
     console.log(ownerBalanceStr);
 }
-
-// async function onOrderIntervalAsync(elapsedTime: number, strategies: BaseStrategy[]): Promise<void> {
-//     console.log(`Starting order interval. Time elapsed: ${elapsedTime / 1000}s`);
-
-//     for (const strategy of strategies) {
-//         if (strategy.isAtBuyInterval(elapsedTime)) {
-//             // await strategy.executeAsync();
-//         }
-//     }
-// }
-
-// async function onBenchmarkIntervalAsync(elapsedTime: number, strategies: BaseStrategy[]): Promise<void> {
-//     console.log(`Starting benchmark interval. Time elapsed: ${elapsedTime / 1000}s`);
-
-//     for (const strategy of strategies) {
-//         await strategy.updateBenchmarkAsync();
-//     }
-// }
